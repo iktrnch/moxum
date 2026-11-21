@@ -9,7 +9,7 @@ use anyhow::Context;
 use indicatif::{ProgressBar, ProgressFinish, ProgressStyle};
 use sha2::{Digest, Sha512};
 
-use crate::config::{Addon, Config};
+use crate::config::{Addon, ApplicationType, Config};
 use crate::platform::Platform;
 use crate::utils::{http::ApiClient, progress::progress_bar};
 use repository::{ReleaseChannel, Version, VersionFile};
@@ -33,6 +33,7 @@ pub fn get_addon(
         !slug.trim().is_empty(),
         "The Modrinth project slug cannot be empty"
     );
+    validate_addons_directory(addons_dir)?;
 
     let client = ApiClient::new().context("Failed to prepare the Modrinth HTTP client")?;
     let versions = fetch_versions(&client, slug)?;
@@ -45,6 +46,8 @@ pub fn get_addon(
                     .iter()
                     .any(|loader| loaders.contains(&loader.as_str()))
                 && channel.allows(version.version_type)
+                && (!matches!(config.minegr.application_type, ApplicationType::Server)
+                    || version.environment.supports_server())
         })
         // Sort by date published, then by ID
         .max_by(|left, right| {
@@ -54,8 +57,8 @@ pub fn get_addon(
         })
         .with_context(|| {
             format!(
-                "No compatible version of {slug} for Minecraft {} on {} with channel {channel}",
-                config.minecraft.version, config.minecraft.platform
+                "No compatible version of {slug} for Minecraft {} on {} with channel {channel} (application type {})",
+                config.minecraft.version, config.minecraft.platform, config.minegr.application_type
             )
         })?;
 
@@ -120,6 +123,24 @@ pub fn get_addon(
         hash: format!("sha512:{}", file.hashes.sha512.to_ascii_lowercase()),
         version_type: channel,
     })
+}
+
+/// Rejects addon-directory symlinks, including dangling links, without following them.
+fn validate_addons_directory(addons_dir: &Path) -> anyhow::Result<()> {
+    match fs::symlink_metadata(addons_dir) {
+        Ok(metadata) => anyhow::ensure!(
+            !metadata.is_symlink(),
+            "Addon directory must not be a symlink: {}",
+            addons_dir.display()
+        ),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => {
+            return Err(error).with_context(|| {
+                format!("Failed to inspect addon directory {}", addons_dir.display())
+            });
+        }
+    }
+    Ok(())
 }
 
 /// Fetches version metadata without changelogs while displaying resolution progress.
@@ -234,6 +255,7 @@ fn verify_file(download: &mut File, file: &VersionFile) -> anyhow::Result<()> {
 
 /// Copies a verified addon beside its destination, then publishes without overwriting files.
 fn install_file(download: &mut File, file: &VersionFile, addons_dir: &Path) -> anyhow::Result<()> {
+    validate_addons_directory(addons_dir)?;
     download
         .rewind()
         .context("Failed to rewind the verified addon for installation")?;

@@ -50,6 +50,8 @@ The configuration's canonical parent is the server root. A non-empty root is all
 
 Write to an adjacent temporary file, flush, and rename atomically. Preserve unrelated comments and formatting where practical. Create configuration with mode `0600`; warn about broader permissions and reject foreign-owned or non-regular files. Treat its contents as sensitive.
 
+`add` holds an exclusive advisory lock on the server root directory from before loading configuration until installation and saving finish. Overlapping additions fail immediately rather than saving stale configuration snapshots. Locking the directory keeps the lock valid across atomic replacements of `minegr.toml`; it does not prevent writes by programs that ignore the lock.
+
 ## Related
 
 - [Add command](../features/commands/add.md)

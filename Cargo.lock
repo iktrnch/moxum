@@ -933,6 +933,7 @@ dependencies = [
  "dialoguer",
  "indicatif",
  "reqwest",
+ "rustix",
  "serde",
  "serde-java-properties",
  "serde_repr",

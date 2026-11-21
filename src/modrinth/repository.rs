@@ -23,6 +23,36 @@ impl ReleaseChannel {
     }
 }
 
+/// The client and server environments advertised by a Modrinth version.
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub(super) enum Environment {
+    ClientAndServer,
+    ClientOnly,
+    ClientOnlyServerOptional,
+    SingleplayerOnly,
+    ServerOnly,
+    ServerOnlyClientOptional,
+    DedicatedServerOnly,
+    ClientOrServer,
+    ClientOrServerPrefersBoth,
+    #[default]
+    #[serde(other)]
+    Unknown,
+}
+
+impl Environment {
+    /// Allows dedicated servers unless the metadata explicitly excludes them.
+    pub(super) fn supports_server(&self) -> bool {
+        !matches!(self, Self::ClientOnly | Self::SingleplayerOnly)
+    }
+
+    /// Allows clients unless the environment requires a dedicated server.
+    pub(super) fn _support_client(&self) -> bool {
+        !matches!(self, Self::DedicatedServerOnly)
+    }
+}
+
 /// Metadata used to select one compatible Modrinth version.
 #[derive(Debug, Deserialize)]
 pub(super) struct Version {
@@ -32,6 +62,9 @@ pub(super) struct Version {
     pub files: Vec<VersionFile>,
     pub version_type: ReleaseChannel,
     pub date_published: chrono::DateTime<chrono::Utc>,
+    /// Missing or unrecognized metadata does not establish an incompatibility.
+    #[serde(default)]
+    pub environment: Environment,
 }
 
 /// One downloadable file belonging to a Modrinth version.
