@@ -4,28 +4,80 @@ use clap::CommandFactory;
 /// Uses the current directory when a command has no positional directory.
 #[test]
 fn config_dir_defaults_to_current_directory_for_every_command() {
-    for command in [
-        "daemon", "backup", "console", "init", "logs", "restart", "start", "status", "stop", "sync",
+    for arguments in [
+        vec!["minegr", "daemon"],
+        vec!["minegr", "init"],
+        vec!["minegr", "add", "simple-voice-chat"],
     ] {
-        let cli = Cli::try_parse_from(["minegr", command]).unwrap();
+        let cli = Cli::try_parse_from(arguments).unwrap();
         assert_eq!(cli.config_dir, PathBuf::from("."));
+        assert!(cli.command.is_some());
+        if let Some(Commands::Add(args)) = cli.command {
+            assert_eq!(args.slug, "simple-voice-chat");
+            assert_eq!(args.channel, None);
+        }
     }
 }
 
 /// Accepts the global positional directory before or after every command.
 #[test]
 fn every_command_accepts_a_config_directory() {
-    for command in [
-        "daemon", "backup", "console", "init", "logs", "restart", "start", "status", "stop", "sync",
-    ] {
-        for directory in ["./server", "/tmp/minegr server", "instances/survival/"] {
-            for arguments in [
-                ["minegr", command, directory],
-                ["minegr", directory, command],
-            ] {
-                let cli = Cli::try_parse_from(arguments).unwrap();
-                assert_eq!(cli.config_dir, PathBuf::from(directory));
+    for directory in ["./server", "/tmp/minegr server", "instances/survival/"] {
+        for arguments in [
+            vec!["minegr", "daemon", directory],
+            vec!["minegr", directory, "daemon"],
+            vec!["minegr", "init", directory],
+            vec!["minegr", directory, "init"],
+            vec!["minegr", "add", directory, "simple-voice-chat"],
+            vec!["minegr", directory, "add", "simple-voice-chat"],
+        ] {
+            let cli = Cli::try_parse_from(arguments).unwrap();
+            assert_eq!(cli.config_dir, PathBuf::from(directory));
+            assert!(cli.command.is_some());
+            if let Some(Commands::Add(args)) = cli.command {
+                assert_eq!(args.slug, "simple-voice-chat");
             }
+        }
+    }
+}
+
+/// Treats removed command names as directory arguments rather than supported subcommands.
+#[test]
+fn removed_commands_are_not_subcommands() {
+    for command in [
+        "backup", "console", "logs", "restart", "start", "status", "stop", "sync",
+    ] {
+        let cli = Cli::try_parse_from(["minegr", command]).unwrap();
+        assert!(cli.command.is_none());
+        assert_eq!(cli.config_dir, PathBuf::from(command));
+    }
+}
+
+/// Requires an addon slug whether the configuration directory is omitted or supplied globally.
+#[test]
+fn add_requires_a_slug() {
+    for arguments in [vec!["minegr", "add"], vec!["minegr", "./server", "add"]] {
+        let error = Cli::try_parse_from(arguments)
+            .err()
+            .expect("add requires an addon slug");
+        assert_eq!(error.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+    }
+}
+
+/// Accepts the channel flag and its short form without consuming the addon slug as a directory.
+#[test]
+fn add_accepts_release_channels() {
+    for flag in ["--channel", "-c"] {
+        for channel in ["release", "beta", "alpha"] {
+            let cli =
+                Cli::try_parse_from(["minegr", "add", flag, channel, "simple-voice-chat"])
+                    .unwrap();
+            let Some(Commands::Add(args)) = cli.command else {
+                panic!("expected add command");
+            };
+            assert_eq!(cli.config_dir, PathBuf::from("."));
+            assert_eq!(args.slug, "simple-voice-chat");
+            assert_eq!(args.channel.unwrap().to_string(), channel);
         }
     }
 }
@@ -120,12 +172,10 @@ fn init_directory_can_appear_before_or_after_flags() {
     }
 }
 
-/// Rejects the removed config-file flags before and after every command.
+/// Rejects legacy config-file flags while reserving add's short flag for release channels.
 #[test]
 fn config_flags_are_no_longer_accepted() {
-    for command in [
-        "daemon", "backup", "console", "init", "logs", "restart", "start", "status", "stop", "sync",
-    ] {
+    for command in ["daemon", "init"] {
         for flag in ["--config", "-c"] {
             for arguments in [
                 ["minegr", flag, "minegr.toml", command],
@@ -137,5 +187,28 @@ fn config_flags_are_no_longer_accepted() {
                 assert_eq!(error.kind(), clap::error::ErrorKind::UnknownArgument);
             }
         }
+    }
+
+    for arguments in [
+        ["minegr", "--config", "minegr.toml", "add", "simple-voice-chat"],
+        ["minegr", "add", "simple-voice-chat", "--config", "minegr.toml"],
+        ["minegr", "-c", "minegr.toml", "add", "simple-voice-chat"],
+    ] {
+        let error = Cli::try_parse_from(arguments)
+            .err()
+            .expect("config-file flags must be rejected");
+        assert_eq!(error.kind(), clap::error::ErrorKind::UnknownArgument);
+    }
+}
+
+/// Rejects a config filename as the value of add's channel option.
+#[test]
+fn add_rejects_config_file_as_channel() {
+    for flag in ["--channel", "-c"] {
+        let error =
+            Cli::try_parse_from(["minegr", "add", "simple-voice-chat", flag, "minegr.toml"])
+                .err()
+                .expect("a config filename is not a release channel");
+        assert_eq!(error.kind(), clap::error::ErrorKind::InvalidValue);
     }
 }
