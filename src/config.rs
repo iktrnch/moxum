@@ -33,16 +33,16 @@ pub struct Addon {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Minegr {
+pub struct Moxum {
     pub application_type: ApplicationType,
     pub version: u8,
     pub uuid: String,
     pub name: String,
 }
 
-impl Minegr {
+impl Moxum {
     pub fn new(name: String) -> Self {
-        Minegr {
+        Moxum {
             application_type: ApplicationType::Server,
             version: 1,
             uuid: uuid::Uuid::new_v4().to_string(),
@@ -89,7 +89,7 @@ impl Default for Java {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
-    pub minegr: Minegr,
+    pub moxum: Moxum,
     pub minecraft: Minecraft,
     pub properties: Properties,
     pub java: Java,
@@ -126,7 +126,7 @@ impl Config {
     /// Atomically saves minegr.toml inside the selected directory with owner-only permissions.
     /// Refuses to replace a symlink, non-regular file, or file owned by another user.
     pub fn try_save(&self, path: &Path) -> anyhow::Result<()> {
-        let destination = path.join("minegr.toml");
+        let destination = path.join("moxum.toml");
         validate_config_destination(&destination)?;
         let text = toml::to_string_pretty(self).context("Failed to serialize the configuration")?;
         let mut staged = tempfile::NamedTempFile::new_in(path)
@@ -146,7 +146,7 @@ impl Config {
         std::fs::File::open(path)
             .context("Failed to open the configuration directory for synchronization")?
             .sync_all()
-            .context("minegr.toml was saved, but synchronizing its directory failed")?;
+            .context("moxum.toml was saved, but synchronizing its directory failed")?;
         Ok(())
     }
 }

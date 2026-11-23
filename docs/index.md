@@ -48,7 +48,7 @@ and tests remain authoritative.
 - [console-command](features/commands/console.md)
 - [init-command](features/commands/init.md)
 - [logs-command](features/commands/logs.md)
-- [minegr-command](features/commands/minegr.md)
+- [moxum-command](features/commands/moxum.md)
 - [restart-command](features/commands/restart.md)
 - [start-command](features/commands/start.md)
 - [status-command](features/commands/status.md)
@@ -60,4 +60,3 @@ and tests remain authoritative.
 
 - [Addon configuration](proposals/addon-configuration.md)
 - [Cross-version stop](proposals/cross-version-stop.md)
-
