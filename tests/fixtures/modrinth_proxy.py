@@ -12,7 +12,7 @@ def create_certificates(root):
     commands = [
         [
             "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1",
-            "-subj", "/CN=Minegr test CA", "-addext", "basicConstraints=critical,CA:TRUE",
+            "-subj", "/CN=Moxum test CA", "-addext", "basicConstraints=critical,CA:TRUE",
             "-keyout", str(root / "ca.key"), "-out", str(root / "ca.pem"),
         ],
         [
@@ -70,7 +70,7 @@ class Handler(socketserver.BaseRequestHandler):
                 body = (self.server.root / "versions.json").read_bytes()
                 status, content_type = "200 OK", "application/json"
             elif method == "GET" and path == "/artifact.jar":
-                body = b"Minegr environment regression artifact"
+                body = b"Moxum environment regression artifact"
                 status, content_type = "200 OK", "application/java-archive"
             else:
                 body = b"Unexpected fixture request"

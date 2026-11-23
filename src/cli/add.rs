@@ -11,7 +11,7 @@ use crate::{
     modrinth::{get_addon, repository::ReleaseChannel},
 };
 
-/// Installs a compatible Modrinth addon and records it in minegr.toml.
+/// Installs a compatible Modrinth addon and records it in moxum.toml.
 #[derive(Debug, clap::Args)]
 #[command(allow_missing_positional = true)]
 pub struct AddArgs {
@@ -46,7 +46,7 @@ pub fn execute(args: &AddArgs, config_dir: &Path) -> anyhow::Result<()> {
     config.addons.push(addon);
     config.try_save(config_dir).with_context(|| {
         format!(
-            "Installed {name}, but saving its record in {}/minegr.toml failed",
+            "Installed {name}, but saving its record in {}/moxum.toml failed",
             config_dir.display()
         )
     })?;
@@ -54,7 +54,7 @@ pub fn execute(args: &AddArgs, config_dir: &Path) -> anyhow::Result<()> {
     eprintln!("  Added {name}");
     eprintln!(
         "  Configuration: {}",
-        config_dir.join("minegr.toml").display()
+        config_dir.join("moxum.toml").display()
     );
     Ok(())
 }

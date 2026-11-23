@@ -5,9 +5,9 @@ use clap::CommandFactory;
 #[test]
 fn config_dir_defaults_to_current_directory_for_every_command() {
     for arguments in [
-        vec!["minegr", "daemon"],
-        vec!["minegr", "init"],
-        vec!["minegr", "add", "simple-voice-chat"],
+        vec!["moxum", "daemon"],
+        vec!["moxum", "init"],
+        vec!["moxum", "add", "simple-voice-chat"],
     ] {
         let cli = Cli::try_parse_from(arguments).unwrap();
         assert_eq!(cli.config_dir, PathBuf::from("."));
@@ -22,14 +22,14 @@ fn config_dir_defaults_to_current_directory_for_every_command() {
 /// Accepts the global positional directory before or after every command.
 #[test]
 fn every_command_accepts_a_config_directory() {
-    for directory in ["./server", "/tmp/minegr server", "instances/survival/"] {
+    for directory in ["./server", "/tmp/moxum server", "instances/survival/"] {
         for arguments in [
-            vec!["minegr", "daemon", directory],
-            vec!["minegr", directory, "daemon"],
-            vec!["minegr", "init", directory],
-            vec!["minegr", directory, "init"],
-            vec!["minegr", "add", directory, "simple-voice-chat"],
-            vec!["minegr", directory, "add", "simple-voice-chat"],
+            vec!["moxum", "daemon", directory],
+            vec!["moxum", directory, "daemon"],
+            vec!["moxum", "init", directory],
+            vec!["moxum", directory, "init"],
+            vec!["moxum", "add", directory, "simple-voice-chat"],
+            vec!["moxum", directory, "add", "simple-voice-chat"],
         ] {
             let cli = Cli::try_parse_from(arguments).unwrap();
             assert_eq!(cli.config_dir, PathBuf::from(directory));
@@ -47,7 +47,7 @@ fn removed_commands_are_not_subcommands() {
     for command in [
         "backup", "console", "logs", "restart", "start", "status", "stop", "sync",
     ] {
-        let cli = Cli::try_parse_from(["minegr", command]).unwrap();
+        let cli = Cli::try_parse_from(["moxum", command]).unwrap();
         assert!(cli.command.is_none());
         assert_eq!(cli.config_dir, PathBuf::from(command));
     }
@@ -56,11 +56,14 @@ fn removed_commands_are_not_subcommands() {
 /// Requires an addon slug whether the configuration directory is omitted or supplied globally.
 #[test]
 fn add_requires_a_slug() {
-    for arguments in [vec!["minegr", "add"], vec!["minegr", "./server", "add"]] {
+    for arguments in [vec!["moxum", "add"], vec!["moxum", "./server", "add"]] {
         let error = Cli::try_parse_from(arguments)
             .err()
             .expect("add requires an addon slug");
-        assert_eq!(error.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+        assert_eq!(
+            error.kind(),
+            clap::error::ErrorKind::MissingRequiredArgument
+        );
     }
 }
 
@@ -70,8 +73,7 @@ fn add_accepts_release_channels() {
     for flag in ["--channel", "-c"] {
         for channel in ["release", "beta", "alpha"] {
             let cli =
-                Cli::try_parse_from(["minegr", "add", flag, channel, "simple-voice-chat"])
-                    .unwrap();
+                Cli::try_parse_from(["moxum", "add", flag, channel, "simple-voice-chat"]).unwrap();
             let Some(Commands::Add(args)) = cli.command else {
                 panic!("expected add command");
             };
@@ -87,7 +89,7 @@ fn add_accepts_release_channels() {
 fn init_accepts_all_options() {
     let matches = Cli::command()
         .try_get_matches_from([
-            "minegr",
+            "moxum",
             "init",
             "./server",
             "--name",
@@ -124,7 +126,7 @@ fn init_accepts_all_options() {
 /// Rejects platforms outside the supported set.
 #[test]
 fn init_rejects_unknown_platforms() {
-    let error = Cli::try_parse_from(["minegr", "init", "--platform", "forge"])
+    let error = Cli::try_parse_from(["moxum", "init", "--platform", "forge"])
         .err()
         .expect("unsupported platforms must be rejected");
     assert_eq!(error.kind(), clap::error::ErrorKind::InvalidValue);
@@ -133,7 +135,7 @@ fn init_rejects_unknown_platforms() {
 /// Leaves every init option unset when no flags are supplied.
 #[test]
 fn init_options_are_optional() {
-    let cli = Cli::try_parse_from(["minegr", "init"]).unwrap();
+    let cli = Cli::try_parse_from(["moxum", "init"]).unwrap();
     let Some(Commands::Init(args)) = cli.command else {
         panic!("expected init command");
     };
@@ -148,7 +150,7 @@ fn init_options_are_optional() {
 #[test]
 fn init_accepts_supported_platforms() {
     for platform in ["vanilla", "paper", "fabric"] {
-        let cli = Cli::try_parse_from(["minegr", "init", "--platform", platform]).unwrap();
+        let cli = Cli::try_parse_from(["moxum", "init", "--platform", platform]).unwrap();
         let Some(Commands::Init(args)) = cli.command else {
             panic!("expected init command");
         };
@@ -160,8 +162,8 @@ fn init_accepts_supported_platforms() {
 #[test]
 fn init_directory_can_appear_before_or_after_flags() {
     for arguments in [
-        ["minegr", "init", "./server", "--name", "Survival"],
-        ["minegr", "init", "--name", "Survival", "./server"],
+        ["moxum", "init", "./server", "--name", "Survival"],
+        ["moxum", "init", "--name", "Survival", "./server"],
     ] {
         let cli = Cli::try_parse_from(arguments).unwrap();
         let Some(Commands::Init(args)) = cli.command else {
@@ -178,8 +180,8 @@ fn config_flags_are_no_longer_accepted() {
     for command in ["daemon", "init"] {
         for flag in ["--config", "-c"] {
             for arguments in [
-                ["minegr", flag, "minegr.toml", command],
-                ["minegr", command, flag, "minegr.toml"],
+                ["moxum", flag, "moxum.toml", command],
+                ["moxum", command, flag, "moxum.toml"],
             ] {
                 let error = Cli::try_parse_from(arguments)
                     .err()
@@ -190,9 +192,21 @@ fn config_flags_are_no_longer_accepted() {
     }
 
     for arguments in [
-        ["minegr", "--config", "minegr.toml", "add", "simple-voice-chat"],
-        ["minegr", "add", "simple-voice-chat", "--config", "minegr.toml"],
-        ["minegr", "-c", "minegr.toml", "add", "simple-voice-chat"],
+        [
+            "moxum",
+            "--config",
+            "moxum.toml",
+            "add",
+            "simple-voice-chat",
+        ],
+        [
+            "moxum",
+            "add",
+            "simple-voice-chat",
+            "--config",
+            "moxum.toml",
+        ],
+        ["moxum", "-c", "moxum.toml", "add", "simple-voice-chat"],
     ] {
         let error = Cli::try_parse_from(arguments)
             .err()
@@ -205,10 +219,9 @@ fn config_flags_are_no_longer_accepted() {
 #[test]
 fn add_rejects_config_file_as_channel() {
     for flag in ["--channel", "-c"] {
-        let error =
-            Cli::try_parse_from(["minegr", "add", "simple-voice-chat", flag, "minegr.toml"])
-                .err()
-                .expect("a config filename is not a release channel");
+        let error = Cli::try_parse_from(["moxum", "add", "simple-voice-chat", flag, "moxum.toml"])
+            .err()
+            .expect("a config filename is not a release channel");
         assert_eq!(error.kind(), clap::error::ErrorKind::InvalidValue);
     }
 }

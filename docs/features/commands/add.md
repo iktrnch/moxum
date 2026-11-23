@@ -6,11 +6,11 @@ created: 2026-11-14
 
 # Add command
 
-`minegr add [CONFIG_DIR] <SLUG>` installs a Modrinth plugin or mod and records the exact file in `minegr.toml`. The directory defaults to `.`.
+`moxum add [CONFIG_DIR] <SLUG>` installs a Modrinth plugin or mod and records the exact file in `moxum.toml`. The directory defaults to `.`.
 
 ```text
-minegr add ./server simple-voice-chat --channel release
-minegr add simple-voice-chat
+moxum add ./server simple-voice-chat --channel release
+moxum add simple-voice-chat
 ```
 
 ## Behaviour
@@ -19,7 +19,7 @@ minegr add simple-voice-chat
 
 Versions must match both the configured Minecraft version and a compatible loader. Fabric accepts Fabric versions; Paper accepts Paper, Spigot, and Bukkit versions. The newest matching publication is selected by its parsed timestamp, with version ID breaking ties deterministically.
 
-When `[minegr].application_type` is `Server`, selection excludes versions whose Modrinth environment is `client_only` or `singleplayer_only`. Other environments remain eligible, including `client_only_server_optional`, which supports optional server functionality. `unknown`, missing, and unrecognized environment metadata do not establish incompatibility and remain eligible. `Instance` configurations retain their existing environment selection. Filtering happens before choosing the newest version, so a newer incompatible release does not hide an older compatible one. See [Modrinth's environment definitions](https://modrinth.com/news/article/new-environments/#new-system).
+When `[moxum].application_type` is `Server`, selection excludes versions whose Modrinth environment is `client_only` or `singleplayer_only`. Other environments remain eligible, including `client_only_server_optional`, which supports optional server functionality. `unknown`, missing, and unrecognized environment metadata do not establish incompatibility and remain eligible. `Instance` configurations retain their existing environment selection. Filtering happens before choosing the newest version, so a newer incompatible release does not hide an older compatible one. See [Modrinth's environment definitions](https://modrinth.com/news/article/new-environments/#new-system).
 
 The primary file is selected, falling back to the first file when no primary is marked. Its filename must name a JAR directly inside the addon directory. Installation targets `mods/` for Fabric and `plugins/` for Paper. These directories must not be symlinks, including dangling symlinks. Vanilla rejects addons.
 
@@ -31,7 +31,7 @@ After installation, the command appends an `[[addons]]` record and saves the con
 
 Before loading configuration, `add` acquires an exclusive advisory lock on the server root directory and holds it through installation and configuration saving. Another `add` targeting the same directory fails immediately while the lock is held, including when invoked through a different path to that directory. The lock is released when the command exits, including on failure. Programs that do not honor this advisory lock can still modify the configuration.
 
-Before contacting Modrinth or installing files, configuration loading rejects a symlink, non-regular file, or `minegr.toml` owned by another effective user. The opened file is validated before reading; symlinks are not followed and special files cannot block the open. Configuration saving also checks an existing destination before staging and again before publication, refusing to replace an unsafe path.
+Before contacting Modrinth or installing files, configuration loading rejects a symlink, non-regular file, or `moxum.toml` owned by another effective user. The opened file is validated before reading; symlinks are not followed and special files cannot block the open. Configuration saving also checks an existing destination before staging and again before publication, refusing to replace an unsafe path.
 
 The addon directory is checked for symlinks before metadata requests and again before staging the verified JAR.
 

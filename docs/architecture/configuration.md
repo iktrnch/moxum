@@ -6,10 +6,10 @@ created: 2026-08-28
 
 # Configuration
 
-One versioned `minegr.toml` describes an instance's identity, pinned server software, Java launch settings, EULA acceptance, and Minecraft properties. Copying it recreates the configured initial state; worlds and other mutable data are transferred separately.
+One versioned `moxum.toml` describes an instance's identity, pinned server software, Java launch settings, EULA acceptance, and Minecraft properties. Copying it recreates the configured initial state; worlds and other mutable data are transferred separately.
 
 ```toml
-[minegr]
+[moxum]
 config_version = 1
 uuid = "018f0000-0000-7000-8000-000000000000"
 name = "survival"
@@ -33,9 +33,9 @@ white-list = true
 
 ## Schema
 
-- `[minegr]`: format version, UUID, and display name. Require `config_version = 1`.
+- `[moxum]`: format version, UUID, and display name. Require `config_version = 1`.
 - `[minecraft]`: Vanilla requires `version`; Paper adds `build`; Fabric adds `loader` and `installer`. Reject fields for another platform. Store an upstream checksum as `<algorithm>:<hex>` when available.
-- `[java]`: optional executable, JVM arguments, and server arguments. If omitted, discover compatible Java from `PATH`. Minegr supplies `-jar ./server.jar` and launches without a shell. It never installs Java.
+- `[java]`: optional executable, JVM arguments, and server arguments. If omitted, discover compatible Java from `PATH`. Moxum supplies `-jar ./server.jar` and launches without a shell. It never installs Java.
 - `[minecraft.properties]`: recognized properties are typed and validated; unknown properties may be strings, numbers, or booleans. Omitted recognized properties use Minecraft defaults when reconstructed.
 - `[[addons]]`: optional pinned Modrinth addon records. Each contains the API filename as `name`, the exact `version_id`, an algorithm-qualified `hash` (`sha512:<hex>`), and `version_type` as the most permissive permitted channel for future updates. Missing addon lists default to empty and empty lists are omitted when saving. The channel policy is `release`, `beta` (including release), or `alpha` (including beta and release).
 - Reject unknown keys outside the properties table. Values are literal; no environment expansion.
@@ -50,7 +50,7 @@ The configuration's canonical parent is the server root. A non-empty root is all
 
 Write to an adjacent temporary file, flush, and rename atomically. Preserve unrelated comments and formatting where practical. Create configuration with mode `0600`; warn about broader permissions and reject foreign-owned or non-regular files. Treat its contents as sensitive.
 
-`add` holds an exclusive advisory lock on the server root directory from before loading configuration until installation and saving finish. Overlapping additions fail immediately rather than saving stale configuration snapshots. Locking the directory keeps the lock valid across atomic replacements of `minegr.toml`; it does not prevent writes by programs that ignore the lock.
+`add` holds an exclusive advisory lock on the server root directory from before loading configuration until installation and saving finish. Overlapping additions fail immediately rather than saving stale configuration snapshots. Locking the directory keeps the lock valid across atomic replacements of `moxum.toml`; it does not prevent writes by programs that ignore the lock.
 
 ## Related
 
@@ -62,4 +62,3 @@ Write to an adjacent temporary file, flush, and rename atomically. Preserve unre
 - [Init command](../features/commands/init.md)
 - [Sync command](../features/commands/sync.md)
 - [Use one declarative instance file](../decisions/0006-use-one-declarative-instance-file.md)
-

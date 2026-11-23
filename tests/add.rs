@@ -6,7 +6,7 @@ use std::process::{Child, Command, Output, Stdio};
 
 use sha2::{Digest, Sha512};
 
-const ARTIFACT: &[u8] = b"Minegr environment regression artifact";
+const ARTIFACT: &[u8] = b"Moxum environment regression artifact";
 
 /// Owns a loopback HTTPS fixture and its temporary certificate authority.
 struct ModrinthFixture {
@@ -46,7 +46,7 @@ impl ModrinthFixture {
     /// Supplies version metadata and runs the real CLI with fixture-only TLS trust.
     fn add(&self, root: &Path, versions: &str) -> Output {
         fs::write(self.root.path().join("versions.json"), versions).unwrap();
-        Command::new(env!("CARGO_BIN_EXE_minegr"))
+        Command::new(env!("CARGO_BIN_EXE_moxum"))
             .arg("add")
             .arg(root)
             .arg("example-addon")
@@ -99,14 +99,14 @@ fn assert_installed(root: &Path, output: &Output, version_id: &str) {
     );
     assert_eq!(fs::read(root.join("mods/example.jar")).unwrap(), ARTIFACT);
     let config: toml::Value =
-        toml::from_str(&fs::read_to_string(root.join("minegr.toml")).unwrap()).unwrap();
+        toml::from_str(&fs::read_to_string(root.join("moxum.toml")).unwrap()).unwrap();
     assert_eq!(config["addons"][0]["version_id"].as_str(), Some(version_id));
 }
 
 /// Writes a minimal server configuration without contacting upstream services.
 fn write_config(root: &Path, platform: &str) -> Vec<u8> {
     let text = format!(
-        r#"[minegr]
+        r#"[moxum]
 application_type = "Server"
 version = 1
 uuid = "018f0000-0000-7000-8000-000000000000"
@@ -126,13 +126,13 @@ jvm_args = "-Xms2G -Xmx2G"
 server_args = "nogui"
 "#
     );
-    fs::write(root.join("minegr.toml"), &text).unwrap();
+    fs::write(root.join("moxum.toml"), &text).unwrap();
     text.into_bytes()
 }
 
 /// Runs the real add command with upstream traffic directed to a closed local port.
 fn add(root: &Path) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_minegr"))
+    Command::new(env!("CARGO_BIN_EXE_moxum"))
         .arg("add")
         .arg(root)
         .arg("example-addon")
@@ -161,7 +161,7 @@ fn add_rejects_concurrent_configuration_updates() {
         error.contains("Another configuration update is already in progress"),
         "{error}"
     );
-    assert_eq!(fs::read(root.path().join("minegr.toml")).unwrap(), original);
+    assert_eq!(fs::read(root.path().join("moxum.toml")).unwrap(), original);
 
     drop(lock);
     let output = add(root.path());
@@ -193,7 +193,7 @@ fn add_rejects_symlinked_addon_directories() {
                 error.contains("Addon directory must not be a symlink"),
                 "{error}"
             );
-            assert_eq!(fs::read(root.path().join("minegr.toml")).unwrap(), original);
+            assert_eq!(fs::read(root.path().join("moxum.toml")).unwrap(), original);
             assert!(fs::symlink_metadata(&addons_dir).unwrap().is_symlink());
             assert_eq!(fs::read_dir(outside.path()).unwrap().count(), 0);
         }
@@ -217,7 +217,7 @@ fn add_rejects_client_environments_for_servers() {
         assert!(!output.status.success(), "Installed {environment}: {error}");
         assert!(error.contains("No compatible version"), "{error}");
         assert!(!root.path().join("mods").exists());
-        assert_eq!(fs::read(root.path().join("minegr.toml")).unwrap(), original);
+        assert_eq!(fs::read(root.path().join("moxum.toml")).unwrap(), original);
     }
 }
 
@@ -260,7 +260,7 @@ fn add_preserves_client_environments_for_instances() {
                 "application_type = \"Server\"",
                 "application_type = \"Instance\"",
             );
-        fs::write(root.path().join("minegr.toml"), config).unwrap();
+        fs::write(root.path().join("moxum.toml"), config).unwrap();
         let versions = format!(
             "[{}]",
             version(environment, "selected", "2026-11-01T00:00:00Z")

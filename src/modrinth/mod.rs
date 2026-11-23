@@ -46,7 +46,7 @@ pub fn get_addon(
                     .iter()
                     .any(|loader| loaders.contains(&loader.as_str()))
                 && channel.allows(version.version_type)
-                && (!matches!(config.minegr.application_type, ApplicationType::Server)
+                && (!matches!(config.moxum.application_type, ApplicationType::Server)
                     || version.environment.supports_server())
         })
         // Sort by date published, then by ID
@@ -58,7 +58,7 @@ pub fn get_addon(
         .with_context(|| {
             format!(
                 "No compatible version of {slug} for Minecraft {} on {} with channel {channel} (application type {})",
-                config.minecraft.version, config.minecraft.platform, config.minegr.application_type
+                config.minecraft.version, config.minecraft.platform, config.moxum.application_type
             )
         })?;
 
@@ -86,7 +86,7 @@ pub fn get_addon(
             .addons
             .iter()
             .any(|addon| addon.version_id == version.id || addon.name == file.filename),
-        "{} is already recorded in minegr.toml; refusing to add it twice",
+        "{} is already recorded in moxum.toml; refusing to add it twice",
         file.filename
     );
 

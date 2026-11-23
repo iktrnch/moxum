@@ -6,7 +6,7 @@ created: 2026-09-07
 
 # Addon configuration
 
-Basic Modrinth addon installation and pinning are implemented by the [add command](../features/commands/add.md). Portable addon configuration remains deferred beyond that initial support.
+Deferred beyond the MVP. Plugin and mod management may extend `moxum.toml` with pinned addons and portable configuration.
 
 Embedded compressed data, external archives, and readable TOML remain alternatives. File ownership, secrets, size limits, and update rules must be designed before adoption.
 
@@ -16,5 +16,3 @@ The current schema stores pinned addon files in `[[addons]]` alongside Minecraft
 
 - [Configuration](../architecture/configuration.md)
 - [Sync command](../features/commands/sync.md)
-
-
